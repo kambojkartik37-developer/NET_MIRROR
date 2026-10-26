@@ -138,8 +138,8 @@ jobs:
           {
             echo "## NetMirror Android TV APK"
             echo ""
-            echo "- Source folder: \${{ steps.project.outputs.source }}"
-            if [[ "\${{ steps.project.outputs.native_tv_source }}" == "true" ]]; then
+            echo "- Source folder: ${{ steps.project.outputs.source }}"
+            if [[ "${{ steps.project.outputs.native_tv_source }}" == "true" ]]; then
               echo "- TV source folder detected."
             else
               echo "- FALLBACK source used: existing mobile decoded project. Leanback launcher metadata was added, but TV-optimized UI and remote navigation are not verified."
@@ -164,7 +164,7 @@ jobs:
       - name: Publish APK release
         if: success()
         env:
-          GH_TOKEN: \${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="netmirror-tv-apk-\${{ github.run_number }}"
-          gh release create "$TAG" NetMirrorTV.apk NetMirrorTV.apk.sha256 --repo "$GITHUB_REPOSITORY" --title "NetMirror Android TV APK #\${{ github.run_number }}" --notes "Debug-signed test APK built from \${{ steps.project.outputs.source }} at commit \${{ github.sha }}. TV launcher metadata is included. Remote-navigation and TV UI behavior still require device testing."
+          TAG="netmirror-tv-apk-${{ github.run_number }}"
+          gh release create "$TAG" NetMirrorTV.apk NetMirrorTV.apk.sha256 --repo "$GITHUB_REPOSITORY" --title "NetMirror Android TV APK #${{ github.run_number }}" --notes "Debug-signed test APK built from ${{ steps.project.outputs.source }} at commit ${{ github.sha }}. TV launcher metadata is included. Remote-navigation and TV UI behavior still require device testing."
