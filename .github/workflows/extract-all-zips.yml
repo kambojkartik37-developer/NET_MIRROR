@@ -1,76 +1,58 @@
-name: Extract All ZIP Archives
+name: Extract All ZIPs
 
 on:
-workflow_dispatch:
-push:
-branches:
-- main
-paths:
-- '*.zip'
-- '.github/workflows/extract-all-zips.yml'
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "*.zip"
+      - ".github/workflows/extract-all-zips.yml"
 
 permissions:
-contents: read
+  contents: read
 
 jobs:
-extract-all-zips:
-name: Extract Repository ZIP Files
-runs-on: ubuntu-latest
-timeout-minutes: 30
+  extract-zips:
+    runs-on: ubuntu-latest
 
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  - name: Install unzip utility
-    run: |
-      sudo apt-get update
-      sudo apt-get install -y unzip
+      - name: Extract all ZIP files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p extracted
+          found=0
 
-  - name: Extract all ZIP files
-    shell: bash
-    run: |
-      set -euo pipefail
+          while IFS= read -r -d '' zipfile; do
+            found=1
+            folder="extracted/$(basename "${zipfile%.zip}")"
+            mkdir -p "$folder"
+            echo "Extracting: $zipfile"
+            unzip -o "$zipfile" -d "$folder"
+          done < <(find . -maxdepth 1 -type f -iname '*.zip' -print0)
 
-      mkdir -p extracted
-      shopt -s nullglob
-      archives=( *.zip )
+          if [ "$found" -eq 0 ]; then
+            echo "No ZIP files found in the repository root."
+            exit 1
+          fi
 
-      if [ "${#archives[@]}" -eq 0 ]; then
-        echo "ERROR: No ZIP files found in repository root."
-        exit 1
-      fi
+      - name: Upload extracted files
+        uses: actions/upload-artifact@v4
+        with:
+          name: NetMirror-Extracted-All-ZIPs
+          path: extracted/
+          if-no-files-found: error
+          retention-days: 7
 
-      for archive in "${archives[@]}"; do
-        name="${archive%.zip}"
-        destination="extracted/$name"
+5. **Commit changes** dabao aur branch `main` select rakho.
+6. Ab **Actions → Extract All ZIPs → Run workflow → Run workflow** karo.
 
-        echo "=================================="
-        echo "Checking: $archive"
-        unzip -tq "$archive"
+### 📦 Result kya milega?
 
-        mkdir -p "$destination"
+Workflow successful hone par Actions ke run page par `NetMirror-Extracted-All-ZIPs` naam ka artifact milega, jise download kar sakte ho.
 
-        echo "Extracting: $archive"
-        unzip -oq "$archive" -d "$destination"
-
-        echo "Completed: $destination"
-      done
-
-      echo "=================================="
-      echo "All ZIP files extracted successfully."
-
-      echo "Extracted file count:"
-      find extracted -type f | wc -l
-
-      echo "Extracted folder sizes:"
-      du -sh extracted/*
-
-  - name: Upload extracted files
-    uses: actions/upload-artifact@v4
-    with:
-      name: NetMirror-Extracted-All-ZIPs
-      path: extracted/
-      if-no-files-found: error
-      compression-level: 1
-      retention-days: 7
+**Dhyan do:** Ye workflow repo ke root mein maujood ZIP files extract karega. Screenshot mein dikh rahi YAML error ko is code se theek karna chahiye. Agar phir bhi red ❌ aaye, naya screenshot bhejna.
