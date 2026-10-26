@@ -1,5 +1,4 @@
-
-name: Extract ZIPs and Push Files
+name: Extract ZIP Archives
 
 on:
   workflow_dispatch:
@@ -8,69 +7,94 @@ on:
       - main
     paths:
       - '*.zip'
-      - '.github/workflows/extract-zips-and-push.yml'
 
 permissions:
   contents: write
 
 concurrency:
-  group: extract-zips-and-push
+  group: extract-zip-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  extract-and-push:
+  extract:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-      - name: Checkout repository
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
-          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
 
-      - name: Install unzip
-        run: sudo apt-get update && sudo apt-get install -y unzip
-
-      - name: Extract all root ZIP files
+      - name: Ensure unzip is available
         shell: bash
         run: |
-          set -euo pipefail
-
-          found=0
-          mkdir -p extracted
-
-          for archive in ./*.zip; do
-            [ -f "$archive" ] || continue
-            found=1
-
-            name="$(basename "$archive" .zip)"
-            destination="extracted/$name"
-
-            echo "Extracting: $archive"
-            mkdir -p "$destination"
-            unzip -o "$archive" -d "$destination"
-          done
-
-          if [ "$found" -eq 0 ]; then
-            echo "No ZIP files found in repository root."
-            exit 1
+          set -Eeuo pipefail
+          if ! command -v unzip >/dev/null 2>&1; then
+            sudo apt-get update -y
+            sudo apt-get install -y unzip
           fi
 
-      - name: Commit and push extracted files
+      - name: Extract ZIP archives to repo root
         shell: bash
         run: |
-          set -euo pipefail
+          set -Eeuo pipefail
+          shopt -s nullglob
+
+          archives=( *.zip )
+
+          if [ "${#archives[@]}" -eq 0 ]; then
+            echo "Root me koi .zip file nahi mili. Kuch extract nahi karna."
+            exit 0
+          fi
+
+          failures=0
+
+          for archive in "${archives[@]}"; do
+            name="${archive%.zip}"
+
+            # Repo ke protected folders ko overwrite hone se bachao
+            if [[ "$name" == ".git" || "$name" == ".github" || -z "$name" ]]; then
+              echo "::warning::'$archive' skip kiya - unsafe target folder name."
+              continue
+            fi
+
+            echo "::group::$archive"
+            echo "Integrity check chal raha hai..."
+            if ! unzip -tq "$archive"; then
+              echo "::error::'$archive' corrupt/invalid hai, skip kar rahe hain."
+              failures=$((failures+1))
+              echo "::endgroup::"
+              continue
+            fi
+
+            echo "Extract ho raha hai -> ./$name"
+            mkdir -p "$name"
+            unzip -oq "$archive" -d "$name"
+            echo "::endgroup::"
+          done
+
+          if [ "$failures" -gt 0 ]; then
+            echo "::warning::$failures archive(s) extract nahi ho paayi (corrupt). Baaki ka kaam jaari hai."
+          fi
+
+      - name: Commit extracted files
+        shell: bash
+        run: |
+          set -Eeuo pipefail
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add -f extracted/
+          # Zip files chhodkar baaki sab (extracted content) stage karo
+          git add -A -- . ':!*.zip'
 
           if git diff --cached --quiet; then
-            echo "No new extracted changes to commit."
+            echo "Commit ke liye kuch naya nahi hai."
             exit 0
           fi
 
-          git commit -m "Extract repository ZIP archives"
+          git commit -m "Extract ZIP archives to repo root [skip ci]"
           git push origin HEAD:main
           
