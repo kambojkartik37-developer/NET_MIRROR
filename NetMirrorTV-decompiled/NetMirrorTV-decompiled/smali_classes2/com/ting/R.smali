@@ -1,0 +1,25 @@
+.class public final Lcom/ting/R;
+.super Ljava/lang/Object;
+
+
+# annotations
+.annotation system Ldalvik/annotation/MemberClasses;
+    value = {
+        Lcom/ting/R$anim;,
+        Lcom/ting/R$color;,
+        Lcom/ting/R$drawable;,
+        Lcom/ting/R$id;,
+        Lcom/ting/R$layout;,
+        Lcom/ting/R$style;
+    }
+.end annotation
+
+
+# direct methods
+.method private constructor <init>()V
+    .locals 0
+
+    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+
+    return-void
+.end method
