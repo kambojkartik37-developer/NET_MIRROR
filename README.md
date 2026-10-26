@@ -63,6 +63,14 @@ The screenshots and banner below are stored in the repository’s root `assets/`
   <sub>Mobile interface concepts • Home, featured title, content rows and bottom navigation</sub>
 </div>
 
+## 🌐 Watch Movies on the Web
+
+**[Open Net77 movie website](https://net77.cc/home?utm_source=home_page)**
+
+> **Instruction — Open in Desktop:** If the website does not work correctly in your phone browser, open the browser menu (⋮) and enable **Desktop site / Desktop mode**, then reload the page. On a computer, open the link in your desktop browser.
+
+*This is an external website, not part of this repository or the NetMirror APK. Availability, content and compatibility are controlled by that website.*
+
 ## 📺 Designed for Android TV, too
 
 <img src="assets/netmirror-devices.webp" alt="NetMirror streaming interface concept across devices" width="100%">
