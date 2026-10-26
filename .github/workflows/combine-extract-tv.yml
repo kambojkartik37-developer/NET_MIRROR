@@ -1,6 +1,9 @@
 name: Combine and Extract NetMirror TV ZIP Parts
 
 on:
+  push:
+    paths:
+      - ".github/workflows/combine-extract-tv.yml"
   workflow_dispatch:
 
 permissions:
