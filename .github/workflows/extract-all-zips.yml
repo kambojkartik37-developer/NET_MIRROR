@@ -13,30 +13,28 @@ permissions:
   contents: read
 
 jobs:
-  extract-zips:
+  extract:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract all ZIP files
+      - name: Extract ZIP files
         shell: bash
         run: |
-          set -euo pipefail
+          set -e
           mkdir -p extracted
           found=0
-
-          while IFS= read -r -d '' zipfile; do
+          for file in ./*.zip; do
+            [ -f "$file" ] || continue
             found=1
-            folder="extracted/$(basename "${zipfile%.zip}")"
-            mkdir -p "$folder"
-            echo "Extracting: $zipfile"
-            unzip -o "$zipfile" -d "$folder"
-          done < <(find . -maxdepth 1 -type f -iname '*.zip' -print0)
-
+            name="${file##*/}"
+            name="${name%.*}"
+            mkdir -p "extracted/$name"
+            unzip -o "$file" -d "extracted/$name"
+          done
           if [ "$found" -eq 0 ]; then
-            echo "No ZIP files found in the repository root."
+            echo "No ZIP files found in repository root."
             exit 1
           fi
 
@@ -47,12 +45,3 @@ jobs:
           path: extracted/
           if-no-files-found: error
           retention-days: 7
-
-5. **Commit changes** dabao aur branch `main` select rakho.
-6. Ab **Actions → Extract All ZIPs → Run workflow → Run workflow** karo.
-
-### 📦 Result kya milega?
-
-Workflow successful hone par Actions ke run page par `NetMirror-Extracted-All-ZIPs` naam ka artifact milega, jise download kar sakte ho.
-
-**Dhyan do:** Ye workflow repo ke root mein maujood ZIP files extract karega. Screenshot mein dikh rahi YAML error ko is code se theek karna chahiye. Agar phir bhi red ❌ aaye, naya screenshot bhejna.
