@@ -1,0 +1,71 @@
+
+name: Extract ZIP Archives
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '*.zip'
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+
+      - name: Extract ZIP archives safely
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          shopt -s nullglob
+          archives=( *.zip )
+
+          if [ "${#archives[@]}" -eq 0 ]; then
+            echo "ERROR: Repository root contains no ZIP files."
+            exit 1
+          fi
+
+          mkdir -p extracted
+
+          for archive in "${archives[@]}"; do
+            name="${archive%.zip}"
+            destination="extracted/$name"
+
+            echo "Checking $archive"
+            unzip -t "$archive"
+
+            echo "Extracting $archive"
+            mkdir -p "$destination"
+            unzip -oq "$archive" -d "$destination"
+          done
+
+      - name: Commit extracted files
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -f extracted/
+
+          if git diff --cached --quiet; then
+            echo "No extracted changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Extract ZIP archives"
+          git push origin HEAD:main
+          
