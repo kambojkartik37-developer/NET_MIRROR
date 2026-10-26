@@ -20,6 +20,14 @@
 
 ---
 
+## 📥 Download NetMirror APK
+
+**[Open the latest APK releases](https://github.com/kambojkartik37-developer/NET_MIRROR/releases)** · **[Build status and logs](https://github.com/kambojkartik37-developer/NET_MIRROR/actions/workflows/build-netmirror-apk.yml)**
+
+The repository now includes a GitHub Actions workflow that rebuilds the decoded Android project and publishes a debug-signed APK release when the build succeeds. If no release is available yet, open the Actions link and check the latest run.
+
+> APK builds are debug-signed and are not production/official store releases. Install only if you trust the source and have the right to use and distribute the app.
+
 ## ✨ About the project
 
 NetMirror is presented here as a **streaming app concept** with a bold black-and-red identity, cinematic artwork, and a layout designed to feel at home on both mobile screens and televisions.
@@ -72,12 +80,12 @@ Features marked as planned should be changed to **Available** only after they wo
 |---|---|
 | README and visual assets | Included |
 | Mobile UI screenshots | Included |
-| Android application source | Not included in this package |
+| Decoded Android project | Included under `NetMirror-smali/NetMirror-smali/` |
 | Android TV build | Not included in this package |
 | Streaming backend / content rights | Not included in this package |
-| APK download | Not provided in this package |
+| APK download | Published to Releases after a successful Actions build |
 
-This ZIP is a **GitHub README starter package**, not an installable APK or complete Android Studio project.
+The repository includes decoded Android resources/Smali and an automated Apktool rebuild workflow. A successful build is required before an installable APK appears under Releases.
 
 ## 🛠️ Suggested roadmap
 
