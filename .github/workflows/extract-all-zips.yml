@@ -1,0 +1,76 @@
+name: Extract All ZIP Archives
+
+on:
+workflow_dispatch:
+push:
+branches:
+- main
+paths:
+- '*.zip'
+- '.github/workflows/extract-all-zips.yml'
+
+permissions:
+contents: read
+
+jobs:
+extract-all-zips:
+name: Extract Repository ZIP Files
+runs-on: ubuntu-latest
+timeout-minutes: 30
+
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v4
+
+  - name: Install unzip utility
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y unzip
+
+  - name: Extract all ZIP files
+    shell: bash
+    run: |
+      set -euo pipefail
+
+      mkdir -p extracted
+      shopt -s nullglob
+      archives=( *.zip )
+
+      if [ "${#archives[@]}" -eq 0 ]; then
+        echo "ERROR: No ZIP files found in repository root."
+        exit 1
+      fi
+
+      for archive in "${archives[@]}"; do
+        name="${archive%.zip}"
+        destination="extracted/$name"
+
+        echo "=================================="
+        echo "Checking: $archive"
+        unzip -tq "$archive"
+
+        mkdir -p "$destination"
+
+        echo "Extracting: $archive"
+        unzip -oq "$archive" -d "$destination"
+
+        echo "Completed: $destination"
+      done
+
+      echo "=================================="
+      echo "All ZIP files extracted successfully."
+
+      echo "Extracted file count:"
+      find extracted -type f | wc -l
+
+      echo "Extracted folder sizes:"
+      du -sh extracted/*
+
+  - name: Upload extracted files
+    uses: actions/upload-artifact@v4
+    with:
+      name: NetMirror-Extracted-All-ZIPs
+      path: extracted/
+      if-no-files-found: error
+      compression-level: 1
+      retention-days: 7
