@@ -20,13 +20,35 @@
 
 ---
 
-## 📥 Download NetMirror APK
+## 📥 Download NetMirror for Android
 
-**[Open the latest APK releases](https://github.com/kambojkartik37-developer/NET_MIRROR/releases)** · **[Build status and logs](https://github.com/kambojkartik37-developer/NET_MIRROR/actions/workflows/build-netmirror-apk.yml)**
+<div align="center">
 
-The repository now includes a GitHub Actions workflow that rebuilds the decoded Android project and publishes a debug-signed APK release when the build succeeds. If no release is available yet, open the Actions link and check the latest run.
+<table>
+  <tr>
+    <td align="center">
 
-> APK builds are debug-signed and are not production/official store releases. Install only if you trust the source and have the right to use and distribute the app.
+### 🔴 NETMIRROR ANDROID
+
+**Your APK is ready to download**
+
+<a href="https://github.com/kambojkartik37-developer/NET_MIRROR/releases/latest/download/NetMirror.apk">
+  <img src="https://img.shields.io/badge/⬇%20DOWNLOAD%20APK-Android%20Phone-2ea44f?style=for-the-badge&logo=android&logoColor=white" alt="Download NetMirror APK for Android phone">
+</a>
+
+<sub>📱 Android phone • APK installer • Direct download</sub>
+
+<br>
+
+<a href="https://github.com/kambojkartik37-developer/NET_MIRROR/releases">View all releases</a> · <a href="https://github.com/kambojkartik37-developer/NET_MIRROR/actions/workflows/build-netmirror-apk.yml">Build status</a>
+
+    </td>
+  </tr>
+</table>
+
+</div>
+
+> **Install note:** This is a debug-signed APK built by this repository’s workflow, not an official app-store release. Download and install only if you trust the source and have the right to use and distribute the app. Android may ask you to allow installation from your browser or file manager.
 
 ## ✨ About the project
 
