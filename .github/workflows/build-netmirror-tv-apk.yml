@@ -1,0 +1,166 @@
+name: Build NetMirror Android TV APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'NetMirrorTV-decompiled/**'
+      - 'NetMirror-Android/NetMirror-smali/**'
+      - 'assets/netmirror-banner.webp'
+      - '.github/workflows/build-netmirror-tv-apk.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build-tv-apk:
+    name: Rebuild, add TV launcher support, sign and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build tools
+        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Install Apktool
+        run: |
+          curl -fL --retry 3 https://github.com/iBotPeaches/Apktool/releases/download/v2.11.1/apktool_2.11.1.jar -o apktool.jar
+          printf '#!/bin/sh\nexec java -jar "$GITHUB_WORKSPACE/apktool.jar" "$@"\n' > apktool
+          chmod +x apktool
+
+      - name: Select and validate decoded project
+        id: project
+        shell: bash
+        run: |
+          if [[ -f NetMirrorTV-decompiled/apktool.yml && -f NetMirrorTV-decompiled/AndroidManifest.xml ]]; then
+            PROJECT_DIR="NetMirrorTV-decompiled"
+            echo "source=NetMirrorTV-decompiled" >> "$GITHUB_OUTPUT"
+            echo "native_tv_source=true" >> "$GITHUB_OUTPUT"
+          elif [[ -f NetMirror-Android/NetMirror-smali/apktool.yml && -f NetMirror-Android/NetMirror-smali/AndroidManifest.xml ]]; then
+            PROJECT_DIR="NetMirror-Android/NetMirror-smali"
+            echo "source=NetMirror-Android/NetMirror-smali" >> "$GITHUB_OUTPUT"
+            echo "native_tv_source=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::NetMirrorTV-decompiled was not found; using the existing decoded Android project. TV launcher metadata will be added, but this does not convert the mobile UI into a TV-optimized interface."
+          else
+            echo "::error::No Apktool project found. Expected NetMirrorTV-decompiled/ or NetMirror-Android/NetMirror-smali/."
+            exit 1
+          fi
+          cp -a "$PROJECT_DIR" build-project
+          test -f build-project/apktool.yml
+          test -f build-project/AndroidManifest.xml
+          echo "Selected project: $PROJECT_DIR"
+
+      - name: Add Android TV launcher declarations
+        run: |
+          mkdir -p build-project/res/drawable-nodpi
+          if [[ -f assets/netmirror-banner.webp ]]; then
+            cp assets/netmirror-banner.webp build-project/res/drawable-nodpi/netmirror_tv_banner.webp
+          else
+            echo "::error::assets/netmirror-banner.webp is required for the Android TV launcher banner."
+            exit 1
+          fi
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          manifest_path = Path("build-project/AndroidManifest.xml")
+          tree = ET.parse(manifest_path)
+          root = tree.getroot()
+          android = "{http://schemas.android.com/apk/res/android}"
+
+          def ensure_feature(name, required):
+              for feature in root.findall("uses-feature"):
+                  if feature.get(android + "name") == name:
+                      feature.set(android + "required", required)
+                      return
+              feature = ET.Element("uses-feature")
+              feature.set(android + "name", name)
+              feature.set(android + "required", required)
+              root.insert(0, feature)
+
+          ensure_feature("android.software.leanback", "false")
+          ensure_feature("android.hardware.touchscreen", "false")
+
+          app = root.find("application")
+          if app is None:
+              raise SystemExit("AndroidManifest.xml has no application element")
+          app.set(android + "banner", "@drawable/netmirror_tv_banner")
+
+          launcher_found = False
+          for activity in app.findall("activity"):
+              for intent_filter in activity.findall("intent-filter"):
+                  actions = [e.get(android + "name") for e in intent_filter.findall("action")]
+                  categories = [e.get(android + "name") for e in intent_filter.findall("category")]
+                  if "android.intent.action.MAIN" in actions and "android.intent.category.LAUNCHER" in categories:
+                      if "android.intent.category.LEANBACK_LAUNCHER" not in categories:
+                          category = ET.SubElement(intent_filter, "category")
+                          category.set(android + "name", "android.intent.category.LEANBACK_LAUNCHER")
+                      launcher_found = True
+
+          if not launcher_found:
+              raise SystemExit("No existing MAIN/LAUNCHER activity found; refusing to guess the app's launch activity")
+
+          ET.register_namespace("android", "http://schemas.android.com/apk/res/android")
+          tree.write(manifest_path, encoding="utf-8", xml_declaration=True)
+          print("Added Leanback launcher category, TV features, and banner.")
+          PY
+          grep -q 'android.intent.category.LEANBACK_LAUNCHER' build-project/AndroidManifest.xml
+
+      - name: Rebuild APK
+        run: ./apktool b build-project -o NetMirrorTV-unsigned.apk
+
+      - name: Align and sign APK
+        run: |
+          keytool -genkeypair -v -keystore netmirror-tv-debug.keystore -storepass android -keypass android -alias netmirrortv -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=NetMirror TV Debug,O=Local Build,C=IN"
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -f -p 4 NetMirrorTV-unsigned.apk NetMirrorTV-aligned.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" sign --ks netmirror-tv-debug.keystore --ks-key-alias netmirrortv --ks-pass pass:android --key-pass pass:android --out NetMirrorTV.apk NetMirrorTV-aligned.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose NetMirrorTV.apk
+          sha256sum NetMirrorTV.apk > NetMirrorTV.apk.sha256
+
+      - name: Record build details
+        run: |
+          {
+            echo "## NetMirror Android TV APK"
+            echo ""
+            echo "- Source folder: \${{ steps.project.outputs.source }}"
+            if [[ "\${{ steps.project.outputs.native_tv_source }}" == "true" ]]; then
+              echo "- TV source folder detected."
+            else
+              echo "- FALLBACK source used: existing mobile decoded project. Leanback launcher metadata was added, but TV-optimized UI and remote navigation are not verified."
+            fi
+            echo "- APK signature verification: passed."
+            echo "- SHA-256:"
+            cat NetMirrorTV.apk.sha256
+            echo ""
+            echo "This is a debug-signed test build. Install and test on a real Android TV device before calling it TV-ready."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NetMirror-Android-TV-APK
+          path: |
+            NetMirrorTV.apk
+            NetMirrorTV.apk.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish APK release
+        if: success()
+        env:
+          GH_TOKEN: \${{ github.token }}
+        run: |
+          TAG="netmirror-tv-apk-\${{ github.run_number }}"
+          gh release create "$TAG" NetMirrorTV.apk NetMirrorTV.apk.sha256 --repo "$GITHUB_REPOSITORY" --title "NetMirror Android TV APK #\${{ github.run_number }}" --notes "Debug-signed test APK built from \${{ steps.project.outputs.source }} at commit \${{ github.sha }}. TV launcher metadata is included. Remote-navigation and TV UI behavior still require device testing."
