@@ -1,0 +1,71 @@
+name: Build NetMirror APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'NetMirror-smali/NetMirror-smali/**'
+      - '.github/workflows/build-netmirror-apk.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Rebuild and publish APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build tools
+        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Install Apktool
+        run: |
+          curl -fL --retry 3 https://github.com/iBotPeaches/Apktool/releases/download/v2.11.1/apktool_2.11.1.jar -o apktool.jar
+          printf '#!/bin/sh\nexec java -jar "$GITHUB_WORKSPACE/apktool.jar" "$@"\n' > apktool
+          chmod +x apktool
+
+      - name: Validate decoded project
+        run: |
+          test -f NetMirror-smali/NetMirror-smali/apktool.yml
+          test -f NetMirror-smali/NetMirror-smali/AndroidManifest.xml
+          test -d NetMirror-smali/NetMirror-smali
+          grep -q 'app.netmirror.nmv2' NetMirror-smali/NetMirror-smali/AndroidManifest.xml
+
+      - name: Rebuild APK
+        run: ./apktool b NetMirror-smali/NetMirror-smali -o NetMirror-unsigned.apk
+
+      - name: Align and sign APK
+        run: |
+          keytool -genkeypair -v -keystore netmirror-debug.keystore -storepass android -keypass android -alias netmirror -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=NetMirror Debug,O=Local Build,C=IN"
+          $ANDROID_HOME/build-tools/35.0.0/zipalign -f -p 4 NetMirror-unsigned.apk NetMirror-aligned.apk
+          $ANDROID_HOME/build-tools/35.0.0/apksigner sign --ks netmirror-debug.keystore --ks-key-alias netmirror --ks-pass pass:android --key-pass pass:android --out NetMirror.apk NetMirror-aligned.apk
+          $ANDROID_HOME/build-tools/35.0.0/apksigner verify --verbose NetMirror.apk
+
+      - name: Publish APK to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="apk-build-${{ github.run_number }}"
+          gh release create "$TAG" NetMirror.apk --repo "$GITHUB_REPOSITORY" --title "NetMirror APK build #${{ github.run_number }}" --notes "Built from the decoded Smali project in commit ${{ github.sha }}. Debug-signed APK; install only if you trust this source."
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NetMirror-APK
+          path: NetMirror.apk
+          if-no-files-found: error
+          retention-days: 30
