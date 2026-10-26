@@ -11,7 +11,7 @@
 <p>
   <img src="https://img.shields.io/badge/Platform-Android%20%7C%20Android%20TV-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android and Android TV">
   <img src="https://img.shields.io/badge/Theme-Dark%20%26%20Red-E50914?style=for-the-badge" alt="Dark and red theme">
-  <img src="https://img.shields.io/badge/Status-Project%20Concept-808080?style=for-the-badge" alt="Project concept">
+  <img src="https://img.shields.io/badge/Status-Automated%20APK%20Builds-2ea44f?style=for-the-badge" alt="Automated APK builds">
 </p>
 
 **Movies • Series • Discover • Watchlist • Big-screen friendly UI**
@@ -20,35 +20,26 @@
 
 ---
 
-## 📥 Download NetMirror for Android
+## 📥 Download APKs
 
-<div align="center">
+### 1. 📱 NetMirror for Android Phone
 
-<table>
-  <tr>
-    <td align="center">
+**[⬇️ Download NetMirror Android APK](https://github.com/kambojkartik37-developer/NET_MIRROR/releases/download/apk-build-4/NetMirror.apk)**
 
-### 🔴 NETMIRROR ANDROID
+- Package: `NetMirror.apk`
+- Build: [Phone APK workflow run](https://github.com/kambojkartik37-developer/NET_MIRROR/actions/runs/40303067229) — **successful**
+- [View all releases](https://github.com/kambojkartik37-developer/NET_MIRROR/releases)
 
-**Your APK is ready to download**
+### 2. 📺 NetMirror for Android TV
 
-<a href="https://github.com/kambojkartik37-developer/NET_MIRROR/releases/latest/download/NetMirror.apk">
-  <img src="https://img.shields.io/badge/⬇%20DOWNLOAD%20APK-Android%20Phone-2ea44f?style=for-the-badge&logo=android&logoColor=white" alt="Download NetMirror APK for Android phone">
-</a>
+**[⬇️ Download NetMirror Android TV APK](https://github.com/kambojkartik37-developer/NET_MIRROR/releases/download/netmirror-tv-apk-3/NetMirrorTV.apk)**
 
-<sub>📱 Android phone • APK installer • Direct download</sub>
+- Package: `NetMirrorTV.apk`
+- Build: [Android TV workflow run](https://github.com/kambojkartik37-developer/NET_MIRROR/actions/runs/40315391119) — **successful**
+- [TV APK checksum (SHA-256)](https://github.com/kambojkartik37-developer/NET_MIRROR/releases/download/netmirror-tv-apk-3/NetMirrorTV.apk.sha256)
+- [Android TV build workflow](https://github.com/kambojkartik37-developer/NET_MIRROR/actions/workflows/build-netmirror-tv-apk.yml)
 
-<br>
-
-<a href="https://github.com/kambojkartik37-developer/NET_MIRROR/releases">View all releases</a> · <a href="https://github.com/kambojkartik37-developer/NET_MIRROR/actions/workflows/build-netmirror-apk.yml">Build status</a>
-
-    </td>
-  </tr>
-</table>
-
-</div>
-
-> **Install note:** This is a debug-signed APK built by this repository’s workflow, not an official app-store release. Download and install only if you trust the source and have the right to use and distribute the app. Android may ask you to allow installation from your browser or file manager.
+> **Install and compatibility note:** These are debug-signed test builds produced by this repository’s GitHub Actions workflows, not official app-store releases. Android TV build #3 was built from the existing `NetMirror-Android/NetMirror-smali/` project with TV launcher metadata added; it was **not** built from the nested `NetMirrorTV-decompiled/NetMirrorTV-decompiled/` project. TV remote navigation, playback, and compatibility have not been fully verified on a physical TV. Install only if you trust the source and have the right to use and distribute the app. Android may ask you to allow installation from your browser or file manager.
 
 ## ✨ About the project
 
@@ -56,7 +47,7 @@ NetMirror is presented here as a **streaming app concept** with a bold black-and
 
 The goal is a simple, visually engaging place to discover movies and series, browse categories, and keep a personal list of titles. On TV, the experience should be comfortable to navigate from a distance with a remote control.
 
-> **Project note:** This README and the included screenshots describe the design shown in the supplied images. They do not claim that an Android APK, backend, streaming catalogue, or playback service is already implemented. Update the status and feature list to match the actual release.
+> **Implementation note:** This repository contains decoded Android projects and automated APK rebuild workflows. The APK builds are confirmed to compile, sign, and publish, but that alone does not verify every screen, streaming source, playback feature, or Android TV remote-control behavior. See the build links above and test the APK on your own device.
 
 ## 📱 App preview
 
@@ -100,16 +91,18 @@ Features marked as planned should be changed to **Available** only after they wo
 
 ## 🧭 Project status
 
-| Area | Status in this repository package |
+| Area | Current status |
 |---|---|
-| README and visual assets | Included |
-| Mobile UI screenshots | Included |
-| Decoded Android project | Included under `NetMirror-Android/NetMirror-smali/` |
-| Android TV build | Not included in this package |
-| Streaming backend / content rights | Not included in this package |
-| APK download | Published to Releases after a successful Actions build |
+| README and visual assets | Included; screenshots/banner preserved in `assets/` |
+| Android phone decoded project | Included under `NetMirror-Android/NetMirror-smali/` |
+| Android TV decoded project | Included under `NetMirrorTV-decompiled/NetMirrorTV-decompiled/` |
+| Android phone APK workflow | Successful build; APK published to Release `apk-build-4` |
+| Android TV APK workflow | Successful build; APK published to Release `netmirror-tv-apk-3` |
+| TV build source | Latest successful TV build used the phone Smali project as a fallback |
+| TV remote navigation / playback | Requires testing on a physical Android TV |
+| Streaming backend / content rights | Not provided or verified by the APK build workflow |
 
-The repository includes decoded Android resources/Smali and an automated Apktool rebuild workflow. A successful build is required before an installable APK appears under Releases.
+Build success confirms the workflow produced and signed an APK; it does not independently certify streaming functionality, content rights, or full Android TV compatibility.
 
 ## 🛠️ Suggested roadmap
 
@@ -130,18 +123,64 @@ The repository includes decoded Android resources/Smali and an automated Apktool
 - Ensure posters, logos, videos and other media are licensed or otherwise permitted.
 - Do not publish API keys, signing credentials, tokens or private configuration in the repository.
 
-## 📦 Repository contents
+## 📦 Repository structure
+
+This is the main repository layout (large decoded folders are shown by their important top-level files and subfolders; their nested contents are not expanded here).
 
 ```text
-netmirror-readme-package/
-├── README.md
-└── assets/
-    ├── netmirror-banner.webp
-    ├── netmirror-logo.webp
-    ├── netmirror-devices.webp
-    ├── app-home.png
-    └── app-categories.png
+NET_MIRROR/
+├── .github/
+│   └── workflows/
+│       ├── build-netmirror-apk.yml
+│       ├── build-netmirror-tv-apk.yml
+│       ├── combine-extract-tv.yml
+│       ├── extract-all-zips.yml
+│       └── extract-and-commit.yml
+├── assets/
+│   ├── app-categories.png
+│   ├── app-home.png
+│   ├── netmirror-banner.webp
+│   ├── netmirror-devices.webp
+│   ├── netmirror-logo.webp
+│   └── netmirror-reference-5.jpg
+├── NetMirror-Android/
+│   └── NetMirror-smali/
+│       ├── AndroidManifest.xml
+│       ├── apktool.yml
+│       ├── assets/
+│       ├── lib/
+│       ├── original/
+│       ├── res/
+│       ├── smali/
+│       └── unknown/
+├── NetMirrorTV-decompiled/
+│   └── NetMirrorTV-decompiled/
+│       ├── AndroidManifest.xml
+│       ├── apktool.yml
+│       ├── assets/
+│       ├── lib/
+│       ├── original/
+│       ├── res/
+│       ├── smali/
+│       ├── smali_classes2/
+│       ├── smali_classes3/
+│       └── unknown/
+├── NetMirrorTV-decompiled.zip.part1
+├── NetMirrorTV-decompiled.zip.part2
+├── NetMirror-smali.zip
+├── NetMirror-README-GitHub-Starter.zip
+├── NetMirror-README-GitHub-Starter-All-Images.zip
+└── README.md
 ```
+
+### What the main folders mean
+
+- **`.github/workflows/`** — automation scripts GitHub Actions uses to rebuild APKs and process/extract ZIP files.
+- **`NetMirror-Android/NetMirror-smali/`** — decoded Android app: `AndroidManifest.xml` declares app components and permissions; `smali/` contains Dalvik bytecode in Smali form; `res/` contains Android resources; `assets/` contains app assets; `lib/` contains native libraries; `apktool.yml` contains Apktool project metadata.
+- **`NetMirrorTV-decompiled/NetMirrorTV-decompiled/`** — separate decoded TV project with its own manifest, resources, Smali folders and Apktool metadata. The extra nested folder matters: the TV workflow currently checks the outer folder, so its latest successful build used the mobile project as fallback.
+- **`assets/`** — README banner, logo, device artwork and UI preview images. These are referenced by the README, so keep their paths and filenames unchanged.
+- **ZIP files** — source/archive packages and split parts used for transfer or extraction; the `.part1` and `.part2` files need to be combined before extracting the split archive.
+- **`README.md`** — project overview, numbered APK downloads, build links and this repository map.
 
 ## 🤝 Contributing
 
