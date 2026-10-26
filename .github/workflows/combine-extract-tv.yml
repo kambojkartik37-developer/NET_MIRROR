@@ -1,21 +1,23 @@
 name: Combine and Extract NetMirror TV ZIP Parts
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - ".github/workflows/combine-extract-tv.yml"
-  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   combine-extract:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify both ZIP parts exist
         shell: bash
@@ -25,30 +27,34 @@ jobs:
           test -s "NetMirrorTV-decompiled.zip.part2"
           ls -lh NetMirrorTV-decompiled.zip.part1 NetMirrorTV-decompiled.zip.part2
 
-      - name: Combine parts into one ZIP
+      - name: Combine and validate ZIP
         shell: bash
         run: |
           set -euo pipefail
-          cat NetMirrorTV-decompiled.zip.part1 NetMirrorTV-decompiled.zip.part2 > "netmirror android tv.zip"
-          unzip -t "netmirror android tv.zip"
+          cat NetMirrorTV-decompiled.zip.part1 NetMirrorTV-decompiled.zip.part2 > "/tmp/netmirror android tv.zip"
+          unzip -t "/tmp/netmirror android tv.zip"
 
-      - name: Extract combined ZIP
+      - name: Extract source into repository folder
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p extracted
-          unzip -q "netmirror android tv.zip" -d extracted
-          test -n "$(find extracted -type f -print -quit)"
-          echo "Extracted file count: $(find extracted -type f | wc -l)"
-          find extracted -maxdepth 3 -type f \( -name AndroidManifest.xml -o -name apktool.yml \) -print
+          rm -rf NetMirrorTV-decompiled
+          mkdir -p NetMirrorTV-decompiled
+          unzip -q "/tmp/netmirror android tv.zip" -d NetMirrorTV-decompiled
+          test -n "$(find NetMirrorTV-decompiled -type f -print -quit)"
+          echo "Extracted files: $(find NetMirrorTV-decompiled -type f | wc -l)"
+          find NetMirrorTV-decompiled -maxdepth 3 -type f \( -name AndroidManifest.xml -o -name apktool.yml \) -print
 
-      - name: Upload combined ZIP and extracted project
-        uses: actions/upload-artifact@v4
-        with:
-          name: netmirror-android-tv-source
-          path: |
-            netmirror android tv.zip
-            extracted/
-          if-no-files-found: error
-          compression-level: 1
-          retention-days: 7
+      - name: Commit extracted source files to this repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A NetMirrorTV-decompiled
+          if git diff --cached --quiet; then
+            echo "Extracted source is already up to date."
+          else
+            git commit -m "Add extracted NetMirror TV source tree"
+            git push
+          fi
