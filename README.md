@@ -38,6 +38,8 @@ The goal is a simple, visually engaging place to discover movies and series, bro
 
 ## 📱 App preview
 
+The screenshots and banner below are stored in the repository’s root `assets/` folder so they render directly on this GitHub page.
+
 <div align="center">
   <img src="assets/app-home.png" alt="NetMirror mobile home screen concept" width="31%">
   &nbsp;
@@ -80,7 +82,7 @@ Features marked as planned should be changed to **Available** only after they wo
 |---|---|
 | README and visual assets | Included |
 | Mobile UI screenshots | Included |
-| Decoded Android project | Included under `NetMirror-smali/NetMirror-smali/` |
+| Decoded Android project | Included under `NetMirror-Android/NetMirror-smali/` |
 | Android TV build | Not included in this package |
 | Streaming backend / content rights | Not included in this package |
 | APK download | Published to Releases after a successful Actions build |
