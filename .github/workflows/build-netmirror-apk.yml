@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'NetMirror-smali/NetMirror-smali/**'
+      - 'NetMirror-Android/NetMirror-smali/**'
       - '.github/workflows/build-netmirror-apk.yml'
 
 permissions:
@@ -42,13 +42,13 @@ jobs:
 
       - name: Validate decoded project
         run: |
-          test -f NetMirror-smali/NetMirror-smali/apktool.yml
-          test -f NetMirror-smali/NetMirror-smali/AndroidManifest.xml
-          test -d NetMirror-smali/NetMirror-smali
-          grep -q 'app.netmirror.nmv2' NetMirror-smali/NetMirror-smali/AndroidManifest.xml
+          test -f NetMirror-Android/NetMirror-smali/apktool.yml
+          test -f NetMirror-Android/NetMirror-smali/AndroidManifest.xml
+          test -d NetMirror-Android/NetMirror-smali
+          grep -q 'app.netmirror.nmv2' NetMirror-Android/NetMirror-smali/AndroidManifest.xml
 
       - name: Rebuild APK
-        run: ./apktool b NetMirror-smali/NetMirror-smali -o NetMirror-unsigned.apk
+        run: ./apktool b NetMirror-Android/NetMirror-smali -o NetMirror-unsigned.apk
 
       - name: Align and sign APK
         run: |
