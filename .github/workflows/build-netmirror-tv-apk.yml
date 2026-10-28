@@ -40,7 +40,7 @@ jobs:
 
       - name: Install Apktool
         run: |
-          curl -fL --retry 3 https://github.com/iBotPeaches/Apktool/releases/download/v2.11.1/apktool_2.11.1.jar -o apktool.jar
+          curl -fL --retry 3 https://github.com/iBotPeaches/Apktool/releases/download/v3.0.3/apktool_3.0.3.jar -o apktool.jar
           printf '#!/bin/sh\nexec java -jar "$GITHUB_WORKSPACE/apktool.jar" "$@"\n' > apktool
           chmod +x apktool
 
@@ -48,7 +48,11 @@ jobs:
         id: project
         shell: bash
         run: |
-          if [[ -f NetMirrorTV-decompiled/apktool.yml && -f NetMirrorTV-decompiled/AndroidManifest.xml ]]; then
+          if [[ -f NetMirrorTV-decompiled/NetMirrorTV-decompiled/apktool.yml && -f NetMirrorTV-decompiled/NetMirrorTV-decompiled/AndroidManifest.xml ]]; then
+            PROJECT_DIR="NetMirrorTV-decompiled/NetMirrorTV-decompiled"
+            echo "source=NetMirrorTV-decompiled/NetMirrorTV-decompiled (combined TV ZIP parts)" >> "$GITHUB_OUTPUT"
+            echo "native_tv_source=true" >> "$GITHUB_OUTPUT"
+          elif [[ -f NetMirrorTV-decompiled/apktool.yml && -f NetMirrorTV-decompiled/AndroidManifest.xml ]]; then
             PROJECT_DIR="NetMirrorTV-decompiled"
             echo "source=NetMirrorTV-decompiled" >> "$GITHUB_OUTPUT"
             echo "native_tv_source=true" >> "$GITHUB_OUTPUT"
@@ -68,13 +72,8 @@ jobs:
 
       - name: Add Android TV launcher declarations
         run: |
-          mkdir -p build-project/res/drawable-nodpi
-          if [[ -f assets/netmirror-banner.webp ]]; then
-            cp assets/netmirror-banner.webp build-project/res/drawable-nodpi/netmirror_tv_banner.webp
-          else
-            echo "::error::assets/netmirror-banner.webp is required for the Android TV launcher banner."
-            exit 1
-          fi
+          # The extracted TV ZIP already contains TV-specific launcher banners.
+          # Keep its native TV banner resource rather than substituting README artwork.
           python3 - <<'PY'
           import xml.etree.ElementTree as ET
           from pathlib import Path
@@ -100,7 +99,13 @@ jobs:
           app = root.find("application")
           if app is None:
               raise SystemExit("AndroidManifest.xml has no application element")
-          app.set(android + "banner", "@drawable/netmirror_tv_banner")
+          if not app.get(android + "banner"):
+              if (manifest_path.parent / "res/drawable/tv_banner.png").exists():
+                  app.set(android + "banner", "@drawable/tv_banner")
+              elif (manifest_path.parent / "res/drawable/tv_banner2.png").exists():
+                  app.set(android + "banner", "@drawable/tv_banner2")
+              else:
+                  raise SystemExit("Extracted TV source has no TV banner resource")
 
           launcher_found = False
           for activity in app.findall("activity"):
